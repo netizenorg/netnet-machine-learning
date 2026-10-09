@@ -46,9 +46,25 @@
     if (!engines[base]) {
       engines[base] = (async () => {
         const lib = await import(new URL('mediapipe/vision_bundle.mjs', base).href)
-        const wasm = new URL('mediapipe/wasm', base).href
-        const fileset = await lib.FilesetResolver.forVisionTasks(wasm)
-        return { lib, fileset }
+        const wasm = new URL('mediapipe/wasm/', base).href
+        // MediaPipe normally loads its engine's JavaScript by adding a <script>
+        // tag to the page, but that silently never loads in some setups (ex:
+        // Firefox, inside netnet.studio's preview). So we load it ourselves
+        // with fetch() and hand MediaPipe the result (see load() below).
+        try {
+          const res = await window.fetch(wasm + 'vision_wasm_internal.js')
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
+          // the file defines a function called ModuleFactory, which starts the engine
+          const factory = new Function(await res.text() + '\nreturn ModuleFactory')() // eslint-disable-line no-new-func
+          const fileset = { wasmBinaryPath: wasm + 'vision_wasm_internal.wasm' }
+          return { lib, fileset, factory }
+        } catch (err) {
+          // if that doesn't work (ex: a page that doesn't allow it), let
+          // MediaPipe load it the usual way
+          console.warn('( ◕ ◞ ◕ ) nn-mediapipe: loading the engine the usual way', err)
+          const fileset = await lib.FilesetResolver.forVisionTasks(wasm.slice(0, -1))
+          return { lib, fileset, factory: null }
+        }
       })()
     }
     return engines[base]
@@ -120,10 +136,10 @@
       ? new URL(assets.endsWith('/') ? assets : assets + '/', document.baseURI).href
       : BASE
     if (!base) {
-      throw new Error('( ◕ ◞ ◕ ) nn-mediapipe: I can\'t tell where my files are, pass the folder\'s path as { assets: \'path/to/nn-ai/\' }')
+      throw new Error('( ◕ ◞ ◕ ) nn-mediapipe: I can\'t tell where my files are, pass the folder\'s path as { assets: \'path/to/src/\' }')
     }
 
-    const { lib, fileset } = await loadEngine(base)
+    const { lib, fileset, factory } = await loadEngine(base)
     const info = MODELS[type]
     const settings = {
       runningMode: 'VIDEO',
@@ -137,14 +153,21 @@
       }
     }
 
+    const create = () => {
+      // MediaPipe expects the engine's ModuleFactory to be a global, and
+      // clears it each time a model is created, so we set it every time
+      if (factory) window.ModuleFactory = factory
+      return lib[info.task].createFromOptions(fileset, settings)
+    }
+
     let landmarker
     try {
-      landmarker = await lib[info.task].createFromOptions(fileset, settings)
+      landmarker = await create()
     } catch (err) {
       if (settings.baseOptions.delegate !== 'GPU') throw err
       console.warn('( ◕ ◞ ◕ ) nn-mediapipe: couldn\'t use the GPU, using the CPU instead')
       settings.baseOptions.delegate = 'CPU'
-      landmarker = await lib[info.task].createFromOptions(fileset, settings)
+      landmarker = await create()
     }
     return new Tracker(landmarker, info.points)
   }
