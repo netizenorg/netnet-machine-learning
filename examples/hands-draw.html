@@ -1,0 +1,74 @@
+<body style="margin: 0; overflow: hidden;"></body>
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+<script src="../src/nn-mediapipe.js"></script>
+<script>
+let video, hands
+let tapping = false // are the left hand's fingers currently touching?
+
+// true when a hand's thumb and index fingertips are touching
+function isPinching (hand) {
+  const thumb = hand[4] // thumb tip
+  const index = hand[8] // index finger tip
+  const wrist = hand[0]
+  const knuckle = hand[9] // base of the middle finger
+
+  // how far apart the fingertips are, relative to the size of the hand
+  const handSize = nn.dist(wrist.x, wrist.y, knuckle.x, knuckle.y)
+  const gap = nn.dist(thumb.x, thumb.y, index.x, index.y) / handSize
+  return gap < 0.3
+}
+
+// right hand: pinch to draw
+function draw (hand) {
+  if (!isPinching(hand)) return
+  const x = (hand[4].x + hand[8].x) / 2
+  const y = (hand[4].y + hand[8].y) / 2
+  nn.create('span')
+    .content('🔥')
+    .css({ fontSize: 48, pointerEvents: 'none' })
+    .addTo('body')
+    .positionOrigin('center')
+    .position(x, y)
+}
+
+// left hand: tap fingers together to clear
+function clear (hand) {
+  const pinching = isPinching(hand)
+  // only clear at the moment the fingers come together (not the whole time)
+  if (pinching && !tapping) {
+    nn.getAll('span').forEach(span => span.remove())
+  }
+  tapping = pinching
+}
+
+function update () {
+  requestAnimationFrame(update)
+
+  // an array of hands, each an array of 21 points lined up with the video
+  const found = hands.detect(video, { mirror: true })
+
+  for (const hand of found) {
+    if (hand.side === 'right') draw(hand)
+    if (hand.side === 'left') clear(hand)
+  }
+}
+
+async function setup () {
+  video = nn.create('video')
+    .set({
+      autoplay: true,
+      muted: true,
+      playsinline: true,
+      stream: await nn.askFor('video')
+    })
+    .css({ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 })
+    .position(0, 0)
+    .scale(-1, 1) // mirrored, like a selfie camera
+    .addTo('body')
+
+  hands = await nn.hands({ numHands: 2 })
+  update()
+}
+
+nn.on('load', setup)
+</script>

@@ -1,0 +1,51 @@
+<body style="margin: 0;"></body>
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+<script src="../src/nn-mediapipe.js"></script>
+<script>
+let video, hands, flame
+
+async function setup () {
+  video = nn.create('video')
+    .set({
+      autoplay: true,
+      muted: true,
+      playsinline: true,
+      stream: await nn.askFor('video')
+    })
+    .scale(-1, 1) // mirror it, like a selfie camera
+    .addTo('body')
+
+  flame = nn.create('div')
+    .content('🔥')
+    .addTo('body')
+    .positionOrigin('center')
+    .css('font-size', 48)
+    .opacity(0)
+
+  flame.data.hue = 0
+
+
+  hands = await nn.hands() // load the model
+}
+
+function animate () {
+  requestAnimationFrame(animate)
+  if (!hands) return
+
+  const found = hands.detect(video, { mirror: true })
+  const hand = found[0] // the first hand it sees (if any)
+
+  if (hand) {
+    const tip = hand[8] // index fingertip
+    flame.opacity(1)
+    flame.position(tip.x, tip.y)
+    flame.data.hue += 10
+    flame.hueRotate(flame.data.hue)
+  } else {
+    flame.opacity(0)
+  }
+}
+
+nn.on('load', setup)
+nn.on('load', animate)
+</script>
