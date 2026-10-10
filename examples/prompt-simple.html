@@ -1,0 +1,38 @@
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+<script src="../src/nn-prompt.js"></script>
+<script>
+// pick a provider: 'gemini', 'openai', 'anthropic' or 'ollama' (no key needed)
+let PROVIDER = 'gemini'
+let MODEL = 'gemini-3.5-flash-lite'
+let KEY = 'PASTE-YOUR-API-KEY-HERE' // ⚠️ keep keys out of code you share or publish! ⚠️
+
+let input, output
+
+function setup () {
+  input = nn.create('input')
+    .set({ placeholder: 'ask me anything' })
+    .addTo('body')
+
+  nn.create('button')
+    .content('send')
+    .addTo('body')
+    .on('click', send)
+
+  output = nn.create('p').addTo('body')
+}
+
+async function send () {
+  output.content('...thinking...')
+
+  let reply = await nn.prompt({
+    provider: PROVIDER,
+    model: MODEL,
+    key: KEY,
+    message: input.value
+  })
+
+  output.content(reply.text)
+}
+
+nn.on('load', setup)
+</script>

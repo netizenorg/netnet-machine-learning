@@ -1,0 +1,63 @@
+<body style="font-family: monospace; padding: 20px;"></body>
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+<script src="../src/nn-prompt.js"></script>
+<script>
+// pick a provider: 'gemini', 'openai', 'anthropic' or 'ollama' (no key needed),
+// or 'generic' for other servers (see docs/prompt.md, this also needs a url)
+const PROVIDER = 'gemini'
+const MODEL = 'gemini-3.5-flash-lite'
+const KEY = 'PASTE-YOUR-API-KEY-HERE'  // ⚠️ keep keys out of code you share or publish! ⚠️
+
+// the model has no memory, so we send the whole conversation every time.
+// this array IS the conversation (keep in mind, you can change it!)
+let history = []
+
+let chat, input
+
+function setup () {
+  chat = nn.create('div').addTo('body')
+
+  input = nn.create('input')
+    .set({ placeholder: 'say something' })
+    .css({ width: 350 })
+    .addTo('body')
+    .on('keydown', (e) => { if (e.key === 'Enter') send() })
+
+  nn.create('button')
+    .content('send')
+    .addTo('body')
+    .on('click', send)
+}
+
+async function send () {
+  const text = input.value.trim()
+  if (!text) return
+  input.value = ''
+
+  history.push({ role: 'user', content: text })
+  addMessage('you', text)
+
+  try {
+    const reply = await nn.prompt({
+      provider: PROVIDER,
+      key: KEY,
+      model: MODEL,
+      system: 'You are a friendly assistant. Keep your answers short.',
+      messages: history
+    })
+    console.log(reply.request) // see exactly what was sent
+    history.push({ role: 'model', content: reply.text })
+    addMessage('model', reply.text)
+  } catch (err) {
+    history.pop() // forget the message that failed, so we can try again
+    addMessage('error', err.message)
+  }
+}
+
+function addMessage (who, text) {
+  const msg = nn.create('p').css({ whiteSpace: 'pre-wrap' }).addTo(chat)
+  msg.textContent = `${who}: ${text}` // textContent shows the text as-is (no HTML)
+}
+
+nn.on('load', setup)
+</script>

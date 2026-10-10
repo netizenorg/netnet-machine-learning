@@ -1,0 +1,101 @@
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+<script src="../src/nn-prompt.js"></script>
+<script>
+// pick a provider: 'gemini', 'openai', 'anthropic' or 'ollama' (no key needed),
+// or 'generic' for other servers (see docs/prompt.md, this also needs a url)
+let PROVIDER = 'gemini'
+let MODEL = 'gemini-3.5-flash-lite'
+let KEY = 'PASTE-YOUR-API-KEY-HERE' // ⚠️ keep keys out of code you share or publish! ⚠️
+
+
+let userInput, tempSlider, results
+
+function setup () {
+  nn.create('h1').content('Explode').addTo('body')
+  nn.create('p')
+    .content('break a word into smaller words that sound like it')
+    .addTo('body')
+
+  userInput = nn.create('input')
+    .set({ placeholder: 'type a word' })
+    .addTo('body')
+    .on('keydown', function (e) {
+      if (e.key === 'Enter') explode()
+    })
+
+  nn.create('button')
+    .content('explode')
+    .addTo('body')
+    .on('click', explode)
+
+  nn.create('br').addTo('body')
+
+  // higher = more random/creative, ragne for Gemini is 0-2
+  // (NOTE: some models don't allow changing this)
+  tempSlider = nn.create('input')
+    .addTo('body')
+    .set({
+      type: 'range',
+      min: 0,
+      max: 2,
+      step: 0.01,
+      value: 2
+    })
+
+  nn.create('label').content('temperature').addTo('body')
+
+  results = nn.create('div').addTo('body')
+}
+
+async function explode () {
+  let word = userInput.value.trim()
+  if (!word) return
+
+  // Like Lupe Fiasco + Google's TextFX, this isn't a special AI model, it's a regular LLM
+  // "primed" with a prompt made of:
+  //   a sentence explaining the task
+  //   a few examples showing the pattern
+  //   the user's word + an empty "Sounds like:"
+  // the model (which is really just predicting "what text comes next")
+  // continues the pattern by filling in that last line.
+  let prompt = `A word can be broken into a sequence of other, smaller words that sound like the original word when spoken aloud.
+
+Word: paradise
+Sounds like: pair a dice
+
+Word: carpet
+Sounds like: car pet
+
+Word: antelope
+Sounds like: ant elope
+
+Word: forgiven
+Sounds like: four give in
+
+Word: ${word}
+Sounds like:`
+
+  try {
+    let reply = await nn.prompt({
+      provider: PROVIDER,
+      model: MODEL,
+      key: KEY,
+      message: prompt,
+      temperature: tempSlider.value
+    })
+    console.log(reply.request) // open the console to see exactly what was sent
+
+    let answer = reply.text.trim().split('\n')[0] // keep just the first line
+
+    // place the anser in a <p> tag, prepended with "{word} →"
+    let result = nn.create('p')
+      .content(`${word} → ${answer}`)
+    // add newest results to the top of the results list
+    results.prepend(result)
+  } catch (err) {
+    nn.create('p').content(`error: ${err.message}`).addTo(results)
+  }
+}
+
+nn.on('load', setup)
+</script>

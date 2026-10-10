@@ -1,6 +1,6 @@
 # MediaPipe (Google)
 
-The files in this folder are Google's MediaPipe Tasks library for the web, redistributed under the Apache License 2.0 (see `LICENSE` in this folder). They are **not** covered by this repository's GPL-3.0 license. (For why this library includes its own copies of other projects' code, see the [main README](../../README.md#why-this-library-includes-copies-of-other-peoples-work).)
+The files in this folder are Google's MediaPipe Tasks library for the web, redistributed under the Apache License 2.0 (see `LICENSE` in this folder). They are **not** covered by this repository's GPL-3.0 license. (For why this library includes these files rather than loading them from Google, see the [main README](../../README.md#why-everything-is-included-in-src).)
 
 - **Source:** the npm package [`@mediapipe/tasks-vision`](https://www.npmjs.com/package/@mediapipe/tasks-vision), version **1.0.1**
 - **Project:** https://github.com/google-ai-edge/mediapipe
