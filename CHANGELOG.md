@@ -10,6 +10,8 @@ First release.
   - The MediaPipe library and models load only when first used.
   - Uses the GPU when available, falling back to the CPU.
   - Loads MediaPipe's engine with `fetch()` rather than letting MediaPipe add a `<script>` tag to the page, which silently failed in Firefox inside netnet.studio's preview. Falls back to MediaPipe's usual loading if that isn't possible.
+- `nn.face()`: face tracking with MediaPipe Face Landmarker: 478 points per face; with `outputFaceBlendshapes: true`, each face also has a `blendshapes` object of named expression scores (such as `jawOpen`).
+- `nn.pose()`: body tracking with MediaPipe Pose Landmarker (lite): 33 points per body, each with a `visibility` value.
 - MediaPipe's usage logger is disabled in the included copy (see `src/mediapipe/README.md`).
 - `nn.prompt()` (`src/nn-prompt.js`): sends prompts to language models, and requests to other AI models' web APIs.
   - Providers: Gemini (`generateContent`), OpenAI (Chat Completions), Anthropic (Messages), Ollama (`/api/chat`), and `generic` (the common format, originally OpenAI's, that many local servers use; needs a `url`), all stateless, with one simple `{ role, content }` message format translated for each (roles are `'user'` and `'model'`; `'assistant'` is accepted too).
@@ -18,5 +20,5 @@ First release.
   - Any property that isn't one of `nn.prompt()`'s own options is added to the request (so no nested objects are needed); `body` holds properties whose names clash with those options.
   - The method is automatic (`POST` when there's data, `GET` when there isn't); with `GET`, data goes in the URL as query parameters.
   - `reply.request` shows exactly what was sent (with the key hidden) and `reply.raw` the full response.
-- Examples: `hands-hello.html`, `hands-draw.html`, `prompt-simple.html`, `prompt-chat.html`, `prompt-explode.html`.
-- Docs: `docs/hands.md`, `docs/prompt.md`.
+- Examples: `hands-hello.html`, `hands-draw.html`, `face-hello.html`, `pose-hello.html`, `prompt-simple.html`, `prompt-chat.html`, `prompt-explode.html`.
+- Docs: `docs/hands.md`, `docs/face.md`, `docs/pose.md`, `docs/prompt.md`, and notes on each model in `src/models/`.

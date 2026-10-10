@@ -1,0 +1,56 @@
+<body style="margin: 0;"></body>
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+<script src="../src/nn-mediapipe.js"></script>
+<script>
+let video, face, emoji
+
+async function setup () {
+  video = nn.create('video')
+    .set({
+      autoplay: true,
+      muted: true,
+      playsinline: true,
+      stream: await nn.askFor('video')
+    })
+    .scale(-1, 1) // mirror it, like a selfie camera
+    .addTo('body')
+
+  emoji = nn.create('div')
+    .content('😎')
+    .addTo('body')
+    .positionOrigin('center')
+    .opacity(0)
+
+  // load the model, and also ask it for the face's expression ("blendshapes")
+  face = await nn.face({ outputFaceBlendshapes: true })
+}
+
+function animate () {
+  requestAnimationFrame(animate)
+  if (!face) return
+
+  const found = face.detect(video, { mirror: true })
+  const f = found[0] // the first face it sees (if any)
+
+  if (f) {
+    const eyeA = f[33] // outer corner of one eye
+    const eyeB = f[263] // outer corner of the other eye
+    const x = (eyeA.x + eyeB.x) / 2
+    const y = (eyeA.y + eyeB.y) / 2
+    const eyes = nn.dist(eyeA.x, eyeA.y, eyeB.x, eyeB.y)
+
+    // jawOpen is a score from 0 (closed) to 1 (wide open)
+    const mouthOpen = f.blendshapes.jawOpen > 0.3
+
+    emoji.content(mouthOpen ? '😮' : '😎')
+      .css('font-size', eyes * 2) // bigger when your face is closer
+      .opacity(1)
+      .position(x, y + eyes * 0.4)
+  } else {
+    emoji.opacity(0)
+  }
+}
+
+nn.on('load', setup)
+nn.on('load', animate)
+</script>

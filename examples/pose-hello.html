@@ -1,0 +1,63 @@
+<body style="margin: 0; overflow: hidden;"></body>
+<script src="https://cdn.jsdelivr.net/gh/netizenorg/netnet-standard-library@1.0.1/build/nn.min.js"></script>
+<script src="../src/nn-mediapipe.js"></script>
+<script>
+let video, pose, canvas
+
+// pairs of points to connect with lines, to draw a stick figure
+// (see docs/pose.md for what each number is)
+const bones = [
+  [11, 12], [11, 13], [13, 15], [12, 14], [14, 16], // shoulders + arms
+  [11, 23], [12, 24], [23, 24], // body
+  [23, 25], [25, 27], [24, 26], [26, 28] // legs
+]
+
+async function setup () {
+  video = nn.create('video')
+    .set({
+      autoplay: true,
+      muted: true,
+      playsinline: true,
+      stream: await nn.askFor('video')
+    })
+    .css({ width: '100%', height: '100vh', objectFit: 'contain', opacity: 0.5 })
+    .scale(-1, 1) // mirror it, like a selfie camera
+    .addTo('body')
+
+  canvas = nn.create('canvas')
+    .position(0, 0)
+    .addTo('body')
+    .resize(nn.width, nn.height)
+
+  canvas.strokeColor = 'white'
+  canvas.fillColor = 'white'
+  canvas.lineWidth = 4
+
+  pose = await nn.pose() // load the model (step back so it can see your body!)
+}
+
+function animate () {
+  requestAnimationFrame(animate)
+  if (!pose) return
+
+  canvas.clear()
+
+  const found = pose.detect(video, { mirror: true })
+  const body = found[0] // the first body it sees (if any)
+  if (!body) return
+
+  for (const [a, b] of bones) {
+    canvas.line(body[a].x, body[a].y, body[b].x, body[b].y)
+  }
+
+  for (const point of body) {
+    // visibility: how sure the model is that this point isn't hidden (0 to 1)
+    canvas.globalAlpha = point.visibility
+    canvas.circle(point.x, point.y, 8)
+  }
+  canvas.globalAlpha = 1
+}
+
+nn.on('load', setup)
+nn.on('load', animate)
+</script>

@@ -13,9 +13,11 @@ It adds functions like `nn.hands()` to `nn`, so you can bring machine learning m
 | Function | What it does | Docs |
 |---|---|---|
 | `nn.hands()` | Tracks hands in a video: 21 points per hand, plus left/right | [docs/hands.md](docs/hands.md) |
+| `nn.face()` | Tracks faces in a video: 478 points per face, plus expressions | [docs/face.md](docs/face.md) |
+| `nn.pose()` | Tracks a body in a video: 33 points, from face to feet | [docs/pose.md](docs/pose.md) |
 | `nn.prompt()` | Sends prompts to language models (on your own computer with Ollama, or Gemini, OpenAI and Anthropic's APIs), and to other AI models with a web API | [docs/prompt.md](docs/prompt.md) |
 
-More are on the way, including face and body tracking.
+More are on the way.
 
 ## Quick start
 

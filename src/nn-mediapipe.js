@@ -3,13 +3,13 @@
   ---------------
   Part of netnet-machine-learning: https://github.com/netizenorg/netnet-machine-learning
   An extension for nn (the netnet standard library) that adds Google's
-  MediaPipe hand tracking model (face and body tracking coming soon).
+  MediaPipe hand, face and body (pose) tracking models.
 
-    const hands = await nn.hands()            // load the model
+    const hands = await nn.hands()            // load the model (or nn.face(), nn.pose())
     const found = hands.detect(video)         // run it on the video's current frame
 
   Load it with a plain <script> tag AFTER nn.min.js. The heavy files only
-  download the first time you call nn.hands().
+  download the first time you call nn.hands(), nn.face() or nn.pose().
 
   These files are found relative to THIS file (not your page), so this folder
   can live anywhere (or on a CDN) as long as it keeps this layout:
@@ -33,10 +33,9 @@
 
   // the models this extension knows about
   const MODELS = {
-    hands: { task: 'HandLandmarker', file: 'models/hand_landmarker.task', points: 'landmarks' }
-    // coming soon (written but not yet tested or added to models/):
-    // face: { task: 'FaceLandmarker', file: 'models/face_landmarker.task', points: 'faceLandmarks' },
-    // pose: { task: 'PoseLandmarker', file: 'models/pose_landmarker_lite.task', points: 'landmarks' }
+    hands: { task: 'HandLandmarker', file: 'models/hand_landmarker.task', points: 'landmarks' },
+    face: { task: 'FaceLandmarker', file: 'models/face_landmarker.task', points: 'faceLandmarks' },
+    pose: { task: 'PoseLandmarker', file: 'models/pose_landmarker_lite.task', points: 'landmarks', visibility: true }
   }
 
   // MediaPipe's library + WebAssembly engine are shared by every model,
@@ -73,7 +72,7 @@
   // MediaPipe gives us points from 0 to 1 (relative to the video's image),
   // this converts them to page pixels, lined up with the video element as it
   // appears on screen (its size, position, object-fit and mirroring)
-  function pageMapper (video, mirror) {
+  function pageMapper (video, mirror, visibility) {
     const box = video.getBoundingClientRect()
     const vw = video.videoWidth || box.width
     const vh = video.videoHeight || box.height
@@ -88,26 +87,33 @@
     }
     const left = box.left + (box.width - w) / 2
     const top = box.top + (box.height - h) / 2
-    return (p) => ({
-      x: left + (mirror ? 1 - p.x : p.x) * w,
-      y: top + p.y * h,
-      z: p.z
-    })
+    return (p) => {
+      const point = {
+        x: left + (mirror ? 1 - p.x : p.x) * w,
+        y: top + p.y * h,
+        z: p.z
+      }
+      // (pose only) how likely this point is to be visible, from 0 to 1
+      if (visibility) point.visibility = p.visibility
+      return point
+    }
   }
 
   class Tracker {
-    constructor (landmarker, points) {
+    constructor (landmarker, info) {
       this.raw = landmarker // the MediaPipe object itself, for anything this doesn't cover
       this.results = null // MediaPipe's full results for the latest frame (0 to 1 values, plus extras)
-      this._points = points
+      this._info = info
       this._lastTime = -1
     }
 
     // runs the model on the video's current frame and returns what it found:
     // an array with one entry per hand (or face, or body), each an array of
     // { x, y, z } points in page pixels. pass { mirror: true } if your video
-    // is displayed mirrored (like a selfie camera)
-    // hands also have a .side property: 'left' or 'right'
+    // is displayed mirrored (like a selfie camera). extras:
+    //   hands have a .side property: 'left' or 'right'
+    //   faces have a .blendshapes object (if outputFaceBlendshapes is true)
+    //   pose points have a .visibility value
     detect (video, opts = {}) {
       // only run the model when the camera has a new frame for us
       if (video.readyState >= 2 && video.currentTime !== this._lastTime) {
@@ -115,12 +121,18 @@
         this.results = this.raw.detectForVideo(video, window.performance.now())
       }
       if (!this.results) return []
-      const toPage = pageMapper(video, opts.mirror)
-      return this.results[this._points].map((points, i) => {
+      const toPage = pageMapper(video, opts.mirror, this._info.visibility)
+      return this.results[this._info.points].map((points, i) => {
         const found = points.map(toPage)
         // which hand it is, from the person's point of view ('left' or 'right')
         const label = this.results.handedness?.[i]?.[0]?.categoryName
         if (label) found.side = label.toLowerCase()
+        // the face's expression, as named scores from 0 to 1 (ex: jawOpen)
+        const shapes = this.results.faceBlendshapes?.[i]?.categories
+        if (shapes) {
+          found.blendshapes = {}
+          for (const s of shapes) found.blendshapes[s.categoryName] = s.score
+        }
         return found
       })
     }
@@ -169,10 +181,10 @@
       settings.baseOptions.delegate = 'CPU'
       landmarker = await create()
     }
-    return new Tracker(landmarker, info.points)
+    return new Tracker(landmarker, info)
   }
 
-  // add nn.hands() (and later nn.face() and nn.pose())
+  // add nn.hands(), nn.face() and nn.pose()
   for (const type in MODELS) {
     if (window.nn[type]) console.warn(`( ◕ ◞ ◕ ) nn-mediapipe: nn.${type} already exists, replacing it`)
     window.nn[type] = (opts) => load(type, opts)

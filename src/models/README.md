@@ -19,3 +19,5 @@ These models were made by other people. To be transparent about where they came 
 | Model file | What it does | Used by | Made by | Notes |
 |---|---|---|---|---|
 | `hand_landmarker.task` | Finds hands and 21 points on each | `nn.hands()` | Google (MediaPipe) | [hand_landmarker.md](hand_landmarker.md) |
+| `face_landmarker.task` | Finds faces, 478 points on each, and their expressions | `nn.face()` | Google (MediaPipe) | [face_landmarker.md](face_landmarker.md) |
+| `pose_landmarker_lite.task` | Finds a person and 33 points on their body | `nn.pose()` | Google (MediaPipe) | [pose_landmarker_lite.md](pose_landmarker_lite.md) |
