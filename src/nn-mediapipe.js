@@ -44,7 +44,7 @@
   // download doesn't just fail silently. returns a function to cancel it
   function warnIfSlow (what) {
     const timer = setTimeout(() => {
-      console.warn(`( ◕ ◞ ◕ ) nn-mediapipe: still ${what}... if this keeps happening, try reloading the page (if this is a new version of the library, the CDN may still be preparing its files)`)
+      console.warn(`( ◕ ◞ ◕ ) nn-mediapipe: still ${what}... the connection to the server may be slow or stuck (the first download of a file can take up to a minute). wait a little longer, or try reloading the page`)
     }, 15000)
     return () => clearTimeout(timer)
   }

@@ -44,9 +44,11 @@ The original version of `nn` itself was written by hand. This extension library 
 **Test on the CDN without a tag:**
 1. Push, then get the hash: `git rev-parse HEAD`
 2. Use commit hash URLs to test, for example: `https://cdn.jsdelivr.net/gh/netizenorg/netnet-machine-learning@<hash>/src/nn-mediapipe.js`
-3. **Warm the cache first:** open the big files in a browser tab and let them download (`.../@<hash>/src/mediapipe/wasm/vision_wasm_internal.wasm` and `.../@<hash>/src/models/*.task`). If a fresh commit still fails, reload once before debugging.
+3. **Warm the cache first, from the browser you'll test in:** open the big files in a tab and let them finish downloading (`.../@<hash>/src/mediapipe/wasm/vision_wasm_internal.wasm` and `.../@<hash>/src/models/*.task`). A new commit's files are new URLs, and jsDelivr's servers each fetch them from GitHub the first time they're asked, which can take a minute or more for big files. Warm with **both** a browser and `curl`: browsers connect over HTTP/3 and `curl` over HTTP/2, and jsDelivr appears to serve these from separate servers with separate caches (in testing, `curl`-warmed files were instant over HTTP/2 but took ~50 s on a browser's first HTTP/3 download). Do the same after tagging a release, ideally on the network students will use, before class.
+4. **Don't judge a fresh commit by its first load.** Slow first downloads that get cut short (by a refresh, or a netnet re-render after an edit) look like failures: requests stuck "pending" or "canceled", and no errors. Wait for the page to finish (or for the "still downloading…" warning), then reload.
+5. **See where loading gets stuck:** load with `debug: true` (for example `nn.hands({ debug: true })`) to log every step with timings. Downloads over 15 seconds also log a "still downloading…" warning, even without `debug`.
 
-**Checklist:** Chrome and Firefox, standalone and inside netnet.studio:
+**Checklist:** Chrome and Firefox, standalone and inside netnet.studio (in a blank sketch: shared links are sandboxed, which blocks the camera):
 - [ ] every example works
 - [ ] no console errors, and no "loading the engine the usual way" warning
 - [ ] no requests to `googleapis` (or other 3rd parties), even after 2+ minutes

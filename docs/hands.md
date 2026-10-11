@@ -207,7 +207,7 @@ These are the options for the version of MediaPipe included in this library (`@m
 ## Troubleshooting
 
 - **Nothing happens / errors about loading files:** make sure your page is served by a server (not `file://`). If you're working offline, check that the whole `src` folder is next to your HTML file.
-- **It seems stuck loading:** load with `nn.hands({ debug: true })` to see each step in the console. If a download takes longer than 15 seconds, you'll also see a "still downloading..." warning; try reloading the page.
+- **It seems stuck loading:** the very first download of the model files (about 20 MB) can sometimes take up to a minute, while the server fetches them. Give it time before reloading, and don't edit your code while it loads (in netnet, each edit restarts the page). Load with `nn.hands({ debug: true })` to see each step in the console; if a download takes longer than 15 seconds, you'll also see a "still downloading..." warning (make sure warnings aren't hidden in your console's filter). Once downloaded, the files are saved by your browser, so later visits are fast.
 - **No camera:** check your browser's camera permission for the page.
 - **The points are on the wrong side:** if your video is mirrored, pass `{ mirror: true }` to `detect()`. If it isn't mirrored, leave it out.
 - **The console warns "couldn't use the GPU":** that's fine. The model runs on your processor instead, just a bit slower.
