@@ -9,7 +9,8 @@ First release.
   - All MediaPipe options pass through; `results` and `raw` give access to MediaPipe's full output and object.
   - The MediaPipe library and models load only when first used.
   - Uses the GPU when available, falling back to the CPU.
-  - Loads MediaPipe's engine with `fetch()` rather than letting MediaPipe add a `<script>` tag to the page, which silently failed in Firefox inside netnet.studio's preview. Falls back to MediaPipe's usual loading if that isn't possible.
+  - Downloads MediaPipe's engine (`.js` and `.wasm`) and the model with its own `fetch()` and hands them to MediaPipe as data, rather than letting MediaPipe load them (its `<script>` tag and downloads silently stalled in netnet.studio's preview). The model downloads in parallel with the engine. Falls back to MediaPipe's usual engine loading if running downloaded code isn't allowed.
+  - Warns in the console if a download or startup takes more than 15 seconds; `debug: true` logs every loading step with timings.
 - `nn.face()`: face tracking with MediaPipe Face Landmarker: 478 points per face; with `outputFaceBlendshapes: true`, each face also has a `blendshapes` object of named expression scores (such as `jawOpen`).
 - `nn.pose()`: body tracking with MediaPipe Pose Landmarker (lite): 33 points per body, each with a `visibility` value.
 - MediaPipe's usage logger is disabled in the included copy (see `src/mediapipe/README.md`).

@@ -38,31 +38,66 @@
     pose: { task: 'PoseLandmarker', file: 'models/pose_landmarker_lite.task', points: 'landmarks', visibility: true }
   }
 
+  const secs = (start) => ((window.performance.now() - start) / 1000).toFixed(1)
+
+  // warns in the console if something takes a long time, so a stalled
+  // download doesn't just fail silently. returns a function to cancel it
+  function warnIfSlow (what) {
+    const timer = setTimeout(() => {
+      console.warn(`( ◕ ◞ ◕ ) nn-mediapipe: still ${what}... if this keeps happening, try reloading the page (if this is a new version of the library, the CDN may still be preparing its files)`)
+    }, 15000)
+    return () => clearTimeout(timer)
+  }
+
+  // downloads a file ourselves (rather than letting MediaPipe do it), as
+  // 'text' or 'arrayBuffer'. we do this because MediaPipe's own downloads
+  // sometimes silently stall or never start in some setups (ex: inside
+  // netnet.studio's preview), and this way we can warn when that happens
+  async function download (url, as, log) {
+    const name = url.split('/').pop()
+    const start = window.performance.now()
+    const done = warnIfSlow(`downloading ${name}`)
+    log(`downloading ${name}`)
+    try {
+      const res = await window.fetch(url)
+      if (!res.ok) throw new Error(`( ◕ ◞ ◕ ) nn-mediapipe: couldn't download ${url} (${res.status})`)
+      const data = await res[as]()
+      log(`downloaded ${name} (${secs(start)}s)`)
+      return data
+    } finally {
+      done()
+    }
+  }
+
   // MediaPipe's library + WebAssembly engine are shared by every model,
   // so we only load them once (per folder)
   const engines = {}
-  function loadEngine (base) {
+  function loadEngine (base, log) {
     if (!engines[base]) {
       engines[base] = (async () => {
+        const done = warnIfSlow('loading the MediaPipe library')
+        log('loading the MediaPipe library')
         const lib = await import(new URL('mediapipe/vision_bundle.mjs', base).href)
+        done()
         const wasm = new URL('mediapipe/wasm/', base).href
-        // MediaPipe normally loads its engine's JavaScript by adding a <script>
-        // tag to the page, but that silently never loads in some setups (ex:
-        // Firefox, inside netnet.studio's preview). So we load it ourselves
-        // with fetch() and hand MediaPipe the result (see load() below).
+        // MediaPipe normally loads its engine by adding a <script> tag to the
+        // page and then fetching the .wasm file itself, but those silently
+        // fail in some setups (ex: Firefox, inside netnet.studio's preview).
+        // So we download both ourselves and hand them to MediaPipe (see load())
+        const [code, wasmBinary] = await Promise.all([
+          download(wasm + 'vision_wasm_internal.js', 'text', log),
+          download(wasm + 'vision_wasm_internal.wasm', 'arrayBuffer', log)
+        ])
+        const fileset = { wasmBinaryPath: wasm + 'vision_wasm_internal.wasm' }
         try {
-          const res = await window.fetch(wasm + 'vision_wasm_internal.js')
-          if (!res.ok) throw new Error(`HTTP ${res.status}`)
-          // the file defines a function called ModuleFactory, which starts the engine
-          const factory = new Function(await res.text() + '\nreturn ModuleFactory')() // eslint-disable-line no-new-func
-          const fileset = { wasmBinaryPath: wasm + 'vision_wasm_internal.wasm' }
-          return { lib, fileset, factory }
+          // the .js file defines a function called ModuleFactory, which starts the engine
+          const factory = new Function(code + '\nreturn ModuleFactory')() // eslint-disable-line no-new-func
+          return { lib, fileset, factory, wasmBinary }
         } catch (err) {
           // if that doesn't work (ex: a page that doesn't allow it), let
-          // MediaPipe load it the usual way
+          // MediaPipe load the engine the usual way
           console.warn('( ◕ ◞ ◕ ) nn-mediapipe: loading the engine the usual way', err)
-          const fileset = await lib.FilesetResolver.forVisionTasks(wasm.slice(0, -1))
-          return { lib, fileset, factory: null }
+          return { lib, fileset: await lib.FilesetResolver.forVisionTasks(wasm.slice(0, -1)) }
         }
       })()
     }
@@ -142,8 +177,11 @@
   // any MediaPipe option can be passed, plus:
   //   assets: path to this folder (only needed if loading this file as a module)
   //   model: path to a different .task model file
+  //   debug: true to log each loading step (and how long it took) in the console
   async function load (type, opts = {}) {
-    const { assets, model, ...options } = opts
+    const { assets, model, debug, ...options } = opts
+    const log = debug ? (msg) => console.log(`( ◕ ◞ ◕ ) nn-mediapipe: ${msg}`) : () => {}
+    const start = window.performance.now()
     const base = assets
       ? new URL(assets.endsWith('/') ? assets : assets + '/', document.baseURI).href
       : BASE
@@ -151,27 +189,41 @@
       throw new Error('( ◕ ◞ ◕ ) nn-mediapipe: I can\'t tell where my files are, pass the folder\'s path as { assets: \'path/to/src/\' }')
     }
 
-    const { lib, fileset, factory } = await loadEngine(base)
     const info = MODELS[type]
+    const userModel = options.baseOptions?.modelAssetPath || options.baseOptions?.modelAssetBuffer
+    const modelUrl = model ? new URL(model, document.baseURI).href : new URL(info.file, base).href
+
+    // download the model (unless you passed your own) while the engine loads
+    const [engine, modelData] = await Promise.all([
+      loadEngine(base, log),
+      userModel ? null : download(modelUrl, 'arrayBuffer', log)
+    ])
+    const { lib, fileset, factory, wasmBinary } = engine
+
     const settings = {
       runningMode: 'VIDEO',
       ...options,
       baseOptions: {
-        modelAssetPath: model
-          ? new URL(model, document.baseURI).href
-          : new URL(info.file, base).href,
         delegate: 'GPU', // run on the graphics card when possible
         ...options.baseOptions
       }
     }
+    // the model's numbers, as data (so MediaPipe doesn't download it again)
+    if (modelData) settings.baseOptions.modelAssetBuffer = new Uint8Array(modelData)
 
     const create = () => {
-      // MediaPipe expects the engine's ModuleFactory to be a global, and
-      // clears it each time a model is created, so we set it every time
-      if (factory) window.ModuleFactory = factory
+      // MediaPipe expects the engine's ModuleFactory (and its settings, the
+      // Module) to be globals, and clears them each time a model is created,
+      // so we set them every time. wasmBinary is the engine we downloaded
+      if (factory) {
+        window.ModuleFactory = factory
+        window.Module = { wasmBinary }
+      }
       return lib[info.task].createFromOptions(fileset, settings)
     }
 
+    log('starting the model')
+    const done = warnIfSlow('starting the model')
     let landmarker
     try {
       landmarker = await create()
@@ -180,7 +232,10 @@
       console.warn('( ◕ ◞ ◕ ) nn-mediapipe: couldn\'t use the GPU, using the CPU instead')
       settings.baseOptions.delegate = 'CPU'
       landmarker = await create()
+    } finally {
+      done()
     }
+    log(`${type} model ready (${secs(start)}s)`)
     return new Tracker(landmarker, info)
   }
 

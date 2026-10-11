@@ -183,6 +183,7 @@ The last three settings relate to the two models inside the hand tracker: one fi
 |---|---|---|
 | `model` | the included `hand_landmarker.task` | The path to a different `.task` model file. |
 | `assets` | worked out automatically | The path to the `src` folder. Only needed if you load `nn-mediapipe.js` as a JavaScript module (`import`), rather than with a `<script>` tag. |
+| `debug` | `false` | Set to `true` to log each loading step (and how long it took) in the console. Handy if loading seems stuck. |
 
 ### Advanced MediaPipe options
 
@@ -192,7 +193,7 @@ These are set for you, so you usually won't need them:
 |---|---|---|
 | `baseOptions.delegate` | `'GPU'` | Runs the model on your graphics card (`'GPU'`) or processor (`'CPU'`). If the GPU doesn't work, this library switches to the CPU automatically. |
 | `runningMode` | `'VIDEO'` | MediaPipe's mode for video frames. Leave this as it is: `detect()` needs it. |
-| `baseOptions.modelAssetPath` | set from `model` | Where MediaPipe loads the model from. Use `model` instead. |
+| `baseOptions.modelAssetPath` | none | Where MediaPipe should load a model from itself. Usually leave this out: this library downloads the model for you (use `model` to choose a different file). |
 | `baseOptions.modelAssetBuffer` | none | The model's contents as data, rather than a file path (for example, a model loaded with `fetch()`). |
 | `canvas` | none | A `<canvas>` for MediaPipe to use for GPU processing. MediaPipe creates its own if you don't give it one. |
 
@@ -206,6 +207,7 @@ These are the options for the version of MediaPipe included in this library (`@m
 ## Troubleshooting
 
 - **Nothing happens / errors about loading files:** make sure your page is served by a server (not `file://`). If you're working offline, check that the whole `src` folder is next to your HTML file.
+- **It seems stuck loading:** load with `nn.hands({ debug: true })` to see each step in the console. If a download takes longer than 15 seconds, you'll also see a "still downloading..." warning; try reloading the page.
 - **No camera:** check your browser's camera permission for the page.
 - **The points are on the wrong side:** if your video is mirrored, pass `{ mirror: true }` to `detect()`. If it isn't mirrored, leave it out.
 - **The console warns "couldn't use the GPU":** that's fine. The model runs on your processor instead, just a bit slower.

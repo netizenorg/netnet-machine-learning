@@ -21,7 +21,7 @@
 - **No top-level globals.** Wrap everything in a function, use strict mode, and always write `window.nn`, so the same file can also be loaded with `import`.
 - **Load lazily.** Heavy libraries load with `import()` and models download only when their function is first called. Share engines between models.
 - **Resolve every path from the extension's own URL** (`document.currentScript.src`, read when the script first runs), never from the page, so the same `src` folder works locally and from a CDN. Accept an `assets` option as the fallback.
-- **Don't let libraries add `<script>` tags to the page.** In Firefox, inside netnet.studio's preview, they silently never load. Load the file with `fetch()` instead (see `loadEngine()` in `nn-mediapipe.js`).
+- **Download big files yourself.** Don't let libraries add `<script>` tags or fetch their own files: inside netnet.studio's preview, those silently stalled. Use your own `fetch()`, hand the library the data, and warn in the console if a download is slow (see `download()` and `loadEngine()` in `nn-mediapipe.js`).
 - **Loading is async; using is simple:** `const thing = await nn.thing(options)`, then plain methods like `thing.detect(video)`, returning plain data (arrays of `{ x, y, z }` in page pixels, so they work like `nn.pointer`).
 - **Folder layout:** `src/nn-<name>.js`, the library in `src/<library>/` (with its LICENSE and a README), and weights in `src/models/` (with a notes file per model).
 
