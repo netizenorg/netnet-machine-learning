@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-10-12)
 
 First release.
 
@@ -21,5 +21,7 @@ First release.
   - Any property that isn't one of `nn.prompt()`'s own options is added to the request (so no nested objects are needed); `body` holds properties whose names clash with those options.
   - The method is automatic (`POST` when there's data, `GET` when there isn't); with `GET`, data goes in the URL as query parameters.
   - `reply.request` shows exactly what was sent (with the key hidden) and `reply.raw` the full response.
+  - If Ollama can't be reached, the error says to check that it's running and that its `OLLAMA_ORIGINS` setting allows the page (and names the page's origin).
 - Examples: `hands-hello.html`, `hands-draw.html`, `face-hello.html`, `pose-hello.html`, `prompt-simple.html`, `prompt-chat.html`, `prompt-explode.html`.
 - Docs: `docs/hands.md`, `docs/face.md`, `docs/pose.md`, `docs/prompt.md`, and notes on each model in `src/models/`.
+- `npm run netitor-docs` builds `scripts/nn-ml-netitor-docs.json` (from `scripts/netitor-docs-data.js`), the short explanations netnet.studio's editor shows when you double-click this library's functions.

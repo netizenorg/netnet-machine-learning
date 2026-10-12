@@ -266,7 +266,12 @@
     try {
       res = await window.fetch(reqUrl, init)
     } catch (err) {
-      throw error(`couldn't reach ${reqUrl} (${err.message}). check the URL and your internet connection, or for a model on your own computer, that it's running and accepts requests from web pages`, { request })
+      // Ollama only accepts requests from pages on localhost unless you allow
+      // others, and the browser reports that as a failed connection
+      const hint = provider === 'ollama'
+        ? `make sure Ollama is running, and that its OLLAMA_ORIGINS setting allows this page (${window.origin}). see docs/prompt.md`
+        : 'check the URL and your internet connection, or for a model on your own computer, that it\'s running and accepts requests from web pages'
+      throw error(`couldn't reach ${reqUrl} (${err.message}). ${hint}`, { request })
     }
 
     const raw = await readBody(res)

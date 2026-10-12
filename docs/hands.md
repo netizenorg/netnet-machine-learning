@@ -96,7 +96,7 @@ Allow camera access, hold up your hand, and the 🔥 follows your index finger. 
 ```js
 hands = await nn.hands()
 ```
-This downloads the model the first time (a few seconds), so it needs `await`. Behind that one line, the extension loads the code that runs the model, and the model itself: several megabytes of numbers that came from training.
+This downloads the model the first time (usually a few seconds, but sometimes longer, see [Troubleshooting](#troubleshooting)), so it needs `await`. Behind that one line, the extension loads the code that runs the model, and the model itself: several megabytes of numbers that came from training.
 
 **2. Ask it what it sees.**
 ```js

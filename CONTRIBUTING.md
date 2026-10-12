@@ -53,9 +53,11 @@ The original version of `nn` itself was written by hand. This extension library 
 - [ ] no console errors, and no "loading the engine the usual way" warning
 - [ ] no requests to `googleapis` (or other 3rd parties), even after 2+ minutes
 
+**netnet's editor:** netnet.studio explains functions when they're double-clicked. If you add or rename a function, or one's behavior changes, update its entry in `scripts/netitor-docs-data.js` (a few high-level sentences), run `npm run netitor-docs`, and copy `scripts/nn-ml-netitor-docs.json` into netitor's `src/edu-data/custom/`.
+
 **Release:**
-1. In `CHANGELOG.md`, rename `## Unreleased` to the version and date (bug fixes: `0.1.0` → `0.1.1`; new features: `0.1.1` → `0.2.0`).
-2. Update the `@x.y.z` in the README's and docs' CDN URLs.
+1. In `CHANGELOG.md`, rename `## Unreleased` to the version and date, like `## 0.1.1 (2026-11-02)` (bug fixes: `0.1.0` → `0.1.1`; new features: `0.1.1` → `0.2.0`).
+2. Update the `@x.y.z` in the README's and docs' CDN URLs, and the `version` in `package.json`.
 3. Commit, push, then tag (no `v` prefix): `git tag 0.2.0` and `git push origin 0.2.0`
 4. Warm the cache and run the checklist again with the `@0.2.0` URL.
 5. Add a new `## Unreleased` heading to `CHANGELOG.md`.

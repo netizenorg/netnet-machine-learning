@@ -1,0 +1,19 @@
+{
+  "name": "netnet-machine-learning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A library of machine learning modules that extends the netnet-standard-library (nn)",
+  "scripts": {
+    "netitor-docs": "node scripts/compile-netitor-docs.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/netizenorg/netnet-machine-learning.git"
+  },
+  "author": "Nick Briz <nickbriz@protonmail.com>",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/netizenorg/netnet-machine-learning/issues"
+  },
+  "homepage": "https://github.com/netizenorg/netnet-machine-learning#readme"
+}

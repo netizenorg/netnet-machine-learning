@@ -38,10 +38,30 @@ This is the same as `examples/prompt-simple.html`, which adds a text box and a b
 | `'ollama'` | your own computer | no | whichever you've downloaded in Ollama |
 | `'gemini'` | Google's servers | yes, [free to start](https://aistudio.google.com/apikey) | [Gemini models](https://ai.google.dev/gemini-api/docs/models) |
 | `'openai'` | OpenAI's servers | yes, paid | [OpenAI models](https://developers.openai.com/api/docs/models) |
-| `'anthropic'` | Anthropic's servers | yes, paid | [Claude models](https://docs.anthropic.com/en/docs/about-claude/models) |
+| `'anthropic'` | Anthropic's servers | yes, paid | [Claude models](https://platform.claude.com/docs/en/models/overview) |
 | `'generic'` | any server that uses the common format (pass its `url`) | depends on the server | depends on the server |
 
 You always choose the `model`. Companies rename and retire models often, so check their list if one stops working.
+
+### Setting up Ollama (connection to a local LLM)
+
+To protect you, Ollama only answers web pages served from your own computer (`http://localhost...` or `http://127.0.0.1...`). To use it from a website, like netnet.studio, you add that site to Ollama's `OLLAMA_ORIGINS` setting. netnet's guide, [Connecting netnet to a local LLM](https://netnet.studio/docs/students/ai-integration.html), walks through installing Ollama, downloading a model and changing this setting on macOS, Windows and Linux.
+
+Once setup, you can work on a netnet sketch like this:
+```js
+async function setup () {
+  const reply = await nn.prompt({
+    provider: 'ollama',
+    model: 'gemma4:e2b', // assuming you downloaded it locally
+    message: 'write a haiku about hands'
+  })
+  console.log(reply.text)
+}
+
+nn.on('load', setup)
+```
+
+For a website other than netnet.studio, use its address instead (the error message tells you your page's address, its "origin"). To allow more than one site, separate them with commas. For example, if you later publish your netnet sketch as a project to your own github, you'll also need to add your own domain (ex: `https://[username].github.io`) to the list of accepted `OLLAMA_ORIGINS`. Avoid `OLLAMA_ORIGINS="*"`: it lets *any* website you visit use the models on your computer, which is risky.
 
 ## Conversations
 
@@ -218,13 +238,13 @@ Your API key is like a password, and with paid providers, anyone who has it can 
   // then use it like this...
   nn.prompt({
     key: keyInput.value
-    // ...wither other properties here
+    // ...with other properties here
   })
   ```
 
 ## Troubleshooting
 
-- **"couldn't reach..." with Ollama:** make sure Ollama is running. Ollama also has to allow requests from web pages (its `OLLAMA_ORIGINS` setting). Some browsers (like Chrome) block secure (`https://`) websites from talking to servers on your own computer; if that happens, try Firefox, or a page served from `http://localhost`.
+- **"couldn't reach..." with Ollama:** make sure Ollama is running, and that `OLLAMA_ORIGINS` allows your page (see [Setting up Ollama](#setting-up-ollama)). In the console, this looks like a "CORS" error, often with a 403. Some browsers (like Chrome) also ask permission, or refuse, when a website (`https://`) talks to a server on your own computer. If that happens, allow it, or try Firefox, or a page served from `http://localhost`.
 - **401 or 403:** your key is missing or wrong.
 - **404 with a model name:** that model doesn't exist (anymore). Check the provider's model list.
 - **429 or 503:** too many requests, or the model is busy. Wait a moment and try again.
