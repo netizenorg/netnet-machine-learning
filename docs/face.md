@@ -67,6 +67,8 @@ nn.on('load', animate)
 
 The sunglasses follow your face and grow as you get closer, and change to 😮 when you open your mouth. This is `examples/face-hello.html` which you can also [try on netnet.studio](https://netnet.studio/?layout=dock-left#code/eJydVDty2zAQ7XmKtRpCCQVKciaFxlZsFW7dpPO4gIilBJsEGAC0zWh8hdTpcgOfLUfIgj/bGleZ0QjE7tt9+3mDM5dZVXlwNjuf7L2v3CpNM6n5nZNYqAfLNfp0t0/pUD9RG7sLn/SbOS+0FFbOCrW1wjYXCz7ni3Rbq0KmWvNShSyT9Vnacayjs/8nK0W2VxpnBQqrld5dEBWfp5SJqGYlSiUqVeHHhOuoQA8PSqJJIBcZJoCluVNRJFyjM8hrnXllNDj0dQVsCocIOjycA7WSWRQeWdya4ik5ATiB2aH9BBC1N1UhmhV4W1P63lzWHuWRLcCc0gV1c+RxnmjKFYhHoXygFe7+ytj3tM8DeyYKZLNFAosppCmUylpjQfkECnWPIKiZIlcImSjRii5ISPndsHhrZEPpyNaO4X2PUj0MHWZGe9SexX///P41GN/naE2VcSrM79qqndIszigIbcdApRVGSPB7hNLQmhMg2YAonAHqjwqGnOoO7rCZ2AE+VRadC/tgk22BWrq9qNBNAlvAUL3jiMKdHcDUvqr9FV02rwHdeMPEnqNo3LHQqqRGhy1b/FGj85etlfxXlubFelBgVDmwk0AzJayvre67upnfUiFt3co631XGCC10E+JoeMFKmODhEj1mnvUiPPT7GksM2Uayt0xdGmzwMmS6OT29DeTUL1ryWU2HycFoDJi3+E2LX379OCDUbejPHoe5Tg1SOc8CK39KWnbetOemv29422Q3ClOhhsbUljZc+/3Ja75QA3+zQ34nHq8Deg1zfgrfIEjrJYYVdBobI58osueHzz0x6RyWI6IZEc2AaFpEd3PwiSi+DBoftYyDtp1jcU7GmaOnJk6GmOWRphn127QKoqnQNQ5qJnj7VEyPjKNsXp+gf+u5tIk=).
 
+**NOTE:** The netnet sketch linked above downloads the model from a CDN (servers that host files for websites), and the first time those servers are asked for a file, they can take a few minutes to send it. If nothing happens, wait a few minutes before editing your code or reloading the page, since either one starts the download over. After that, your browser keeps a copy, so it loads quickly.
+
 ## How it works
 
 The same three steps as [`nn.hands()`](hands.md#how-it-works):
