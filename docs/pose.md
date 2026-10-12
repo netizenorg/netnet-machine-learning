@@ -29,12 +29,25 @@ const bones = [
 
 async function setup () {
   video = nn.create('video')
-    .set({ autoplay: true, muted: true, playsinline: true, stream: await nn.askFor('video') })
-    .css({ width: '100%', height: '100vh', objectFit: 'contain', opacity: 0.5 })
+    .set({
+      autoplay: true,
+      muted: true,
+      playsinline: true,
+      stream: await nn.askFor('video')
+    })
+    .css({
+      width: '100%',
+      height: '100vh',
+      objectFit: 'contain',
+      opacity: 0.5
+    })
     .scale(-1, 1) // mirror it, like a selfie camera
     .addTo('body')
 
-  canvas = nn.create('canvas').position(0, 0).addTo('body').resize(nn.width, nn.height)
+  canvas = nn.create('canvas')
+    .position(0, 0)
+    .addTo('body')
+    .resize(nn.width, nn.height)
   canvas.strokeColor = 'white'
   canvas.fillColor = 'white'
   canvas.lineWidth = 4
@@ -47,10 +60,13 @@ function animate () {
   if (!pose) return
 
   canvas.clear()
-  const body = pose.detect(video, { mirror: true })[0] // the first body (if any)
+  // [0] = the first body (if any)
+  const body = pose.detect(video, { mirror: true })[0]
   if (!body) return
 
-  for (const [a, b] of bones) canvas.line(body[a].x, body[a].y, body[b].x, body[b].y)
+  for (const [a, b] of bones) {
+    canvas.line(body[a].x, body[a].y, body[b].x, body[b].y)
+  }
   for (const point of body) {
     canvas.globalAlpha = point.visibility // faint if the point might be hidden
     canvas.circle(point.x, point.y, 8)
@@ -62,7 +78,7 @@ nn.on('load', setup)
 nn.on('load', animate)
 ```
 
-Step back from the camera so it can see your body, and a stick figure follows you. (This is `examples/pose-hello.html`.)
+Step back from the camera so it can see your body, and a stick figure follows you. This is `examples/pose-hello.html`, which you can also [try on netnet.studio](http://localhost:8001/?layout=dock-left#code/eJydVNtu2zAMffdXcAUGO5hj59J2Q9EWGwb0CwbsIciDbCkxV1nyJDldVvTfR8pO0gzdy4ACPSHFcygeyre+dtgF8K6+u2hC6PxNWdbSFD+8VBp3rjAqlNumpH/4Wxnrtgzpb+qDMFI4OdVYOeH2n+fFrJiXVY9alsYULTLLxf1tOWjcJ7f/L9aKukGjploJZ9BsP5NUMSuJiaSmrZIoOuzU24L3iVYBdiiVzaGzXuVQC7MTPknKEjqBzoPdUAZN8BAs1NYYVQd4wtCAJl2fUMgHqCxhuINVArCaz3OYL9b5iJYRLQldRbQgdBnRJaFrQiTmG9trqUjwAwjX+gPPYnmoWcSaxXJEVFNZuedzMRa5F1eEPkZE3IvriK4JfVpzgVZbn6yTRPi9qWHTmzqgNeBV6DvIJvBMbHEadBMyqnZKBJWlMZROKAlQ0OHsOUIA0QfbabG/geB6lY/Rtg9Knof4kEfDEztP+EAa7Q2IJ4GBNYV/fLDuXPNllK69P0o/oQzNDaTz2ex9emBrFG6bMER3zTFsqx9k2gNyhuwKAs0p14kaA91gVlydiflaaJVN2cAJz65F56wDDDkZ/6hA0Nj0BhVtTKucGIqElN9slrIx1DvFhnU6H+cQO8yT1g7ZhWyWw2zyFk0MOeVp8zOiiTfPmXC47uQoU9A07aP6ajU1egfpU4NBpaf0BrX+Z5K9+c7UlLzk1vk9ED46w7+zOApthYTQKGgtPc/kJUmOqyQMtnTJwzI59bNXPnyJUco/OBpWNh7ixnED2TtmntDZ0DtzGlpR85vO+BRprmZraoZFN/QqQ9x9yKhcmH2cwPgMKXoXWy+kCuR6Nr7u59HAYf3IZSI86HPVa/0NTSgbCFcih2rNH4H4wodbnc0s4+qVWBe/cjjA/QirU5Rg7PPlnD9+WgZ67uGMfattJfQX3TUi3olOFjv0WKGmjeWhbARX0x14LgNVyysBlYIGpVTmNV+NjkaaDUS/8pGRev10aOxN4TkbTP7TiqbsfJoPH4zJX8Gjq6fP7B9s3e2R)
 
 ## How it works
 

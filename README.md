@@ -27,43 +27,43 @@ More are on the way.
 <script>
   let video, hands, flame
 
-    async function setup () {
-      video = nn.create('video')
-        .set({
-          autoplay: true,
-          muted: true,
-          playsinline: true,
-          stream: await nn.askFor('video')
-        })
-        .scale(-1, 1)
-        .addTo('body')
+  async function setup () {
+    video = nn.create('video')
+      .set({
+        autoplay: true,
+        muted: true,
+        playsinline: true,
+        stream: await nn.askFor('video')
+      })
+      .scale(-1, 1)
+      .addTo('body')
 
-      flame = nn.create('div')
-        .content('🔥')
-        .addTo('body')
-        .positionOrigin('center')
-        .css('font-size', 48)
+    flame = nn.create('div')
+      .content('🔥')
+      .addTo('body')
+      .positionOrigin('center')
+      .css('font-size', 48)
 
-      // 1️⃣ LOAD THE MODEL
-      hands = await nn.hands()
-    }
+    // 1️⃣ LOAD THE MODEL
+    hands = await nn.hands()
+  }
 
-    function animate () {
-      requestAnimationFrame(animate)
-      if (!hands) return
+  function animate () {
+    requestAnimationFrame(animate)
+    if (!hands) return
 
-      // 2️⃣ USE MODEL TO DETECT HANDS IN VIDEO
-      const found = hands.detect(video, { mirror: true })
-      const hand = found[0] // the first hand it sees (if any)
-      if (!hand) return
+    // 2️⃣ USE MODEL TO DETECT HANDS IN VIDEO
+    const found = hands.detect(video, { mirror: true })
+    const hand = found[0] // the first hand it sees (if any)
+    if (!hand) return
 
-      // 3️⃣ MAKE USE OF MODEL'S PREDICTIONS
-      const fingerTip = hand[8]
-      flame.position(fingerTip.x, fingerTip.y)
-    }
+    // 3️⃣ MAKE USE OF MODEL'S PREDICTIONS
+    const fingerTip = hand[8]
+    flame.position(fingerTip.x, fingerTip.y)
+  }
 
-    nn.on('load', setup)
-    nn.on('load', animate)
+  nn.on('load', setup)
+  nn.on('load', animate)
 </script>
 ```
 

@@ -15,18 +15,26 @@ The model runs **in your browser**. Your camera video is never sent anywhere.
 
 Your page has to be served by a server (not opened as a `file://`). To work offline, see [Working offline](hands.md#working-offline).
 
-## Hello World: 😎 
+## Hello World: 😎
 
 ```js
 let video, face, emoji
 
 async function setup () {
   video = nn.create('video')
-    .set({ autoplay: true, muted: true, playsinline: true, stream: await nn.askFor('video') })
+    .set({
+      autoplay: true,
+      muted: true,
+      playsinline: true,
+      stream: await nn.askFor('video')
+    })
     .scale(-1, 1) // mirror it, like a selfie camera
     .addTo('body')
 
-  emoji = nn.create('div').content('😎').addTo('body').positionOrigin('center')
+  emoji = nn.create('div')
+    .content('😎')
+    .addTo('body')
+    .positionOrigin('center')
 
   // load the model, and also ask it for the face's expression ("blendshapes")
   face = await nn.face({ outputFaceBlendshapes: true })
@@ -36,23 +44,28 @@ function animate () {
   requestAnimationFrame(animate)
   if (!face) return
 
-  const f = face.detect(video, { mirror: true })[0] // the first face (if any)
+  // [0] = the first face (if any)
+  const f = face.detect(video, { mirror: true })[0]
   if (!f) return
 
   const eyeA = f[33] // outer corner of one eye
   const eyeB = f[263] // outer corner of the other eye
   const eyes = nn.dist(eyeA.x, eyeA.y, eyeB.x, eyeB.y)
 
-  emoji.content(f.blendshapes.jawOpen > 0.3 ? '😮' : '😎') // open your mouth!
+  // open your mouth!
+  const e = f.blendshapes.jawOpen > 0.3 ? '😮' : '😎'
+  const x = (eyeA.x + eyeB.x) / 2
+  const y = (eyeA.y + eyeB.y) / 2 + eyes * 0.4
+  emoji.content(e)
     .css('font-size', eyes * 2)
-    .position((eyeA.x + eyeB.x) / 2, (eyeA.y + eyeB.y) / 2 + eyes * 0.4)
+    .position(x, y)
 }
 
 nn.on('load', setup)
 nn.on('load', animate)
 ```
 
-The sunglasses follow your face and grow as you get closer, and change to 😮 when you open your mouth. (This is `examples/face-hello.html`.)
+The sunglasses follow your face and grow as you get closer, and change to 😮 when you open your mouth. This is `examples/face-hello.html` which you can also [try on netnet.studio](http://localhost:8001/?layout=dock-left#code/eJydVDty2zAQ7XmKtRpCCQVKciaFxlZsFW7dpPO4gIilBJsEGAC0zWh8hdTpcgOfLUfIgj/bGleZ0QjE7tt9+3mDM5dZVXlwNjuf7L2v3CpNM6n5nZNYqAfLNfp0t0/pUD9RG7sLn/SbOS+0FFbOCrW1wjYXCz7ni3Rbq0KmWvNShSyT9Vnacayjs/8nK0W2VxpnBQqrld5dEBWfp5SJqGYlSiUqVeHHhOuoQA8PSqJJIBcZJoCluVNRJFyjM8hrnXllNDj0dQVsCocIOjycA7WSWRQeWdya4ik5ATiB2aH9BBC1N1UhmhV4W1P63lzWHuWRLcCc0gV1c+RxnmjKFYhHoXygFe7+ytj3tM8DeyYKZLNFAosppCmUylpjQfkECnWPIKiZIlcImSjRii5ISPndsHhrZEPpyNaO4X2PUj0MHWZGe9SexX///P41GN/naE2VcSrM79qqndIszigIbcdApRVGSPB7hNLQmhMg2YAonAHqjwqGnOoO7rCZ2AE+VRadC/tgk22BWrq9qNBNAlvAUL3jiMKdHcDUvqr9FV02rwHdeMPEnqNo3LHQqqRGhy1b/FGj85etlfxXlubFelBgVDmwk0AzJayvre67upnfUiFt3co631XGCC10E+JoeMFKmODhEj1mnvUiPPT7GksM2Uayt0xdGmzwMmS6OT29DeTUL1ryWU2HycFoDJi3+E2LX379OCDUbejPHoe5Tg1SOc8CK39KWnbetOemv29422Q3ClOhhsbUljZc+/3Ja75QA3+zQ34nHq8Deg1zfgrfIEjrJYYVdBobI58osueHzz0x6RyWI6IZEc2AaFpEd3PwiSi+DBoftYyDtp1jcU7GmaOnJk6GmOWRphn127QKoqnQNQ5qJnj7VEyPjKNsXp+gf+u5tIk=).
 
 ## How it works
 
